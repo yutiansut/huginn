@@ -61,14 +61,6 @@ GIT
       delayed_job (>= 3.0, < 5)
 
 GIT
-  remote: https://github.com/lostisland/faraday_middleware.git
-  revision: 59088da02940d0ee2010b2e3156343346767c31e
-  branch: master
-  specs:
-    faraday_middleware (0.10.0)
-      faraday (>= 0.7.4, < 1.0)
-
-GIT
   remote: https://github.com/sferik/twitter.git
   revision: d11707edf4abd13f7ada0eef57fc1eaa1062d75b
   specs:
@@ -237,8 +229,10 @@ GEM
       evernote-thrift
       oauth (>= 0.4.1)
     execjs (2.6.0)
-    faraday (0.12.1)
+    faraday (0.12.2)
       multipart-post (>= 1.2, < 3)
+    faraday_middleware (0.12.2)
+      faraday (>= 0.7.4, < 1.0)
     feedjira (2.1.0)
       faraday (>= 0.9)
       faraday_middleware (>= 0.9)
@@ -665,7 +659,7 @@ DEPENDENCIES
   em-http-request (~> 1.1.2)
   evernote_oauth
   faraday (~> 0.9)
-  faraday_middleware!
+  faraday_middleware (>= 0.10.1)
   feedjira (~> 2.1)
   ffi (>= 1.9.4)
   font-awesome-sass (~> 4.7.0)
@@ -751,4 +745,4 @@ RUBY VERSION
    ruby 2.3.4p301
 
 BUNDLED WITH
-   1.14.6
+   1.15.3
