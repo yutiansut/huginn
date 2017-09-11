@@ -441,14 +441,9 @@ class Agent < ActiveRecord::Base
 end
 
 class AgentDrop
-  def type
-    @object.short_type
-  end
-
-  METHODS = %i[
+  delegate *%i[
     id
     name
-    type
     options
     memory
     sources
@@ -459,13 +454,11 @@ class AgentDrop
     disabled
     keep_events_for
     propagate_immediately
-  ]
+  ], to: :@object
 
-  METHODS.each { |attr|
-    define_method(attr) {
-      @object.__send__(attr)
-    } unless method_defined?(attr)
-  }
+  def type
+    @object.short_type
+  end
 
   def working
     @object.working?

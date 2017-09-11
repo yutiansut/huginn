@@ -16,14 +16,20 @@ module LiquidDroppable
     end
 
     def each
-      (public_instance_methods - Drop.public_instance_methods).each { |name|
+      self.class.json_keys.each { |name|
         yield [name, __send__(name)]
       }
     end
 
+    def self.json_keys
+      @json_keys ||=
+        public_instance_methods -
+        Liquid::Drop.public_instance_methods -
+        %i[to_liquid as_json each to_s]
+    end
+
     def as_json
-      return {} unless defined?(self.class::METHODS)
-      Hash[self.class::METHODS.map { |m| [m, send(m).as_json]}]
+      Hash[self.class.json_keys.map { |m| [m.to_s, __send__(m).as_json]}]
     end
   end
 
@@ -41,13 +47,7 @@ module LiquidDroppable
   end
 
   class MatchDataDrop < Drop
-    METHODS = %w[pre_match post_match names size]
-
-    METHODS.each { |attr|
-      define_method(attr) {
-        @object.__send__(attr)
-      }
-    }
+    delegate :pre_match, :post_match, :names, :size, to: :@object
 
     def to_s
       @object[0]
@@ -69,13 +69,7 @@ module LiquidDroppable
   require 'uri'
 
   class URIDrop < Drop
-    METHODS = URI::Generic::COMPONENT
-
-    METHODS.each { |attr|
-      define_method(attr) {
-        @object.__send__(attr)
-      }
-    }
+    delegate *URI::Generic::COMPONENT, to: :@object
   end
 
   class ::URI::Generic
@@ -84,44 +78,33 @@ module LiquidDroppable
     end
   end
 
+  # This drop currently does not support the `slice` filter.
   class ActiveRecordCollectionDrop < Drop
+    # compatibility with array
+    delegate :each, :first, :last, to: :@object
+    # as_json is provided by Enumerable
     include Enumerable
 
-    def each(&block)
-      @object.each(&block)
-    end
+    delegate :count, to: :@object
+    # compatibility with array; also required by the `size` filter
+    alias size count
+
+    # required for variable indexing as array
+    delegate :fetch, to: :@object
 
     # required for variable indexing as array
     def [](i)
       case i
       when Integer
         @object[i]
-      when 'size', 'first', 'last'
+      when 'size', 'count', 'first', 'last'
+        # `{{ var.size }}` generates a call to `var['size']` because
+        # we have `[]` defined.  The methods are still required
+        # because filters check their existence with `respond_to?` and
+        # directly call them.
         __send__(i)
       end
     end
-
-    # required for variable indexing as array
-    def fetch(i, &block)
-      @object.fetch(i, &block)
-    end
-
-    # compatibility with array; also required by the `size` filter
-    def size
-      @object.count
-    end
-
-    # compatibility with array
-    def first
-      @object.first
-    end
-
-    # compatibility with array
-    def last
-      @object.last
-    end
-
-    # This drop currently does not support the `slice` filter.
   end
 
   class ::ActiveRecord::Associations::CollectionProxy
